@@ -5,7 +5,9 @@
 
 - [Tempo bundle](#tempo-bundle)
     - [Usage](#usage)
-        - [Monolithic deployment](#monolithic-deployment)
+        - [Scaling monolithic deployment](#scaling-monolithic-deployment)
+        - [Minimal microservices deployment](#minimal-microservices-deployment)
+        - [Recommended microservices deployment](#recommended-microservices-deployment)
     - [Overlays](#overlays)
     - [Publishing](#publishing)
 
@@ -30,7 +32,7 @@ This Juju bundle deploys Tempo and a small object storage server, consisting of 
 
 - [Tempo Coordinator](https://charmhub.io/tempo-coordinator-k8s) ([source](https://github.com/canonical/tempo-coordinator-k8s-operator))
 - [Tempo Worker](https://charmhub.io/tempo-worker-k8s) ([source](https://github.com/canonical/tempo-worker-k8s-operator))
-- [s3integrator](https://charmhub.io/s3-integrator) ([source](https://github.com/canonical/s3-integrator))
+- [S3 Integrator](https://charmhub.io/s3-integrator) ([source](https://github.com/canonical/s3-integrator))
 
 This bundle is under development.
 Join us on:
@@ -46,11 +48,12 @@ Before deploying the bundle you may want to create a dedicated model for Tempo c
 juju add-model tempo
 ```
 
-### Monolithic deployment
-The bundle deploys Tempo in its [monolithic mode](https://grafana.com/docs/tempo/latest/setup/deployment/#monolithic-mode), which runs all required components in a single process and is the default mode of operation. Monolithic mode is the simplest way to deploy Grafana Tempo and is useful if you want to get started quickly or want to work with Grafana Tempo in a development environment.
+### Scaling monolithic deployment
+The bundle, by default, deploys Tempo in its [scaling monolithic mode](https://grafana.com/docs/tempo/latest/setup/deployment/#scaling-monolithic-mode), which runs all required roles within a single process. Scaling monolithic mode is the way to deploy Grafana Tempo with horizontal scale out by instantiating more than one `worker` process and is useful if you want to get started quickly or want to work with Grafana Tempo in a development environment.
 
 ```shell
-tox -e render-bundle -- bundle.yaml
+# render bundle with "edge" charms
+tox -e render-edge
 juju deploy ./bundle.yaml --trust
 ```
 
@@ -60,10 +63,53 @@ The bundle will deploy:
 - 1 `coordinator` unit (`tempo-coordinator-k8s` charm)
 - 1 `s3-integrator` unit (`s3-integrator` charm)
 
-[note]
+[!NOTE]  
 The default number of worker units is an odd number to prevent split-brain situations, and greater than 1 for the deployment to be HA.
-[/note]
 
+### Minimal microservices deployment
+The bundle is able to deploy Tempo in its [microservices mode](https://grafana.com/docs/tempo/latest/setup/deployment/#microservices-mode), which runs each one of the required roles in distinct processes. Each required role is assigned to one worker unit to achieve the minimal deployment for the cluster to be considered consistent. Minimal microservices mode is the way to deploy Grafana Tempo in a distributed architecture without high availability.
+
+Add `--mode` to deploy `tempo-bundle` in `minimal-microservices` mode.
+
+```shell
+# render bundle with "edge" charms
+tox -e render-edge -- --mode=minimal-microservices
+juju deploy ./bundle.yaml --trust
+```
+
+The bundle will deploy:
+
+- 1 `tempo-worker-querier` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-query-frontend` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-ingester` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-distributor` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-compactor` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-metrics-generator` unit (`tempo-worker-k8s` charm)
+- 1 `coordinator` unit (`tempo-coordinator-k8s` charm)
+- 1 `s3-integrator` unit (`s3-integrator` charm)
+
+### Recommended microservices deployment
+The bundle is able to deploy Tempo in its [microservices mode](https://grafana.com/docs/tempo/latest/setup/deployment/#microservices-mode), which runs each one of the required roles in distinct processes. Each required role is assigned to an arbitrary number of worker units to achieve the recommended deployment for the cluster to be considered robust. Recommended microservices mode is the way to deploy Grafana Tempo in a distributed architecture while achieving high availability in a production environment.
+
+Add `--mode` to deploy `tempo-bundle` in `recommended-microservices` mode.
+
+```shell
+# render bundle with "edge" charms
+tox -e render-edge -- --mode=recommended-microservices
+juju deploy ./bundle.yaml --trust
+```
+
+<!-- TODO: find out what the actual recommended deployment is -->
+The bundle will deploy:
+
+- 1 `tempo-worker-querier` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-query-frontend` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-ingester` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-distributor` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-compactor` unit (`tempo-worker-k8s` charm)
+- 1 `tempo-worker-metrics-generator` unit (`tempo-worker-k8s` charm)
+- 1 `coordinator` unit (`tempo-coordinator-k8s` charm)
+- 1 `s3-integrator` unit (`s3-integrator` charm)
 
 ## Overlays
 
@@ -85,7 +131,7 @@ juju deploy tempo-bundle --channel=edge --trust --overlay ./tls-overlay.yaml
 
 ## Publishing
 ```shell
-./render_bundle.py bundle.yaml --channel=edge
+tox -e render-edge  # creates bundle.yaml
 charmcraft pack
 charmcraft upload tempo-bundle.zip
 charmcraft release tempo-bundle --channel=edge --revision=1
