@@ -1,0 +1,34 @@
+---
+bundle: kubernetes
+name: tempo-bundle
+description: >
+  Tempo is a distributed tracing backend by Grafana, supporting Jaeger, Zipkin, and OpenTelemetry protocols.
+
+website: https://github.com/canonical/tempo-bundle
+issues: https://github.com/canonical/tempo-bundle/issues
+
+applications:
+  tempo:
+    charm: tempo-coordinator-k8s
+    channel: {{ channel|default('edge', true) }}
+    scale: 1
+    trust: true
+    constraints: arch=amd64
+  tempo-worker:
+    charm: tempo-worker-k8s
+    channel: {{ channel|default('edge', true) }}
+    scale: 3
+    options:
+      role: "all"
+    constraints: arch=amd64
+    trust: true
+  s3-integrator:
+    charm: s3-integrator
+    scale: 1
+    channel: {{ channel|default('edge', true) }}
+
+relations:
+- - tempo:tempo-cluster
+  - tempo-worker:tempo-cluster
+- - tempo:s3
+  - s3-integrator:s3-credentials
