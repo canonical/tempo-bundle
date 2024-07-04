@@ -18,7 +18,7 @@ def get_this_script_dir() -> Path:
 
 
 async def cli_deploy_bundle(
-    ops_test: OpsTest, name: str, *, channel: str = "edge", overlays: List[Union[str, Path]] = None
+    ops_test: OpsTest, name: str, *, overlays: List[Union[str, Path]] = None
 ):
     """Deploy bundle from charmhub or from file."""
     overlay_args = []
@@ -34,8 +34,6 @@ async def cli_deploy_bundle(
         ops_test.model_full_name,
         name,
     ] + overlay_args
-    if not Path(name).is_file():
-        run_args.append(f"--channel={channel}")
 
     retcode, stdout, stderr = await ops_test.run(*run_args)
     assert retcode == 0, f"Deploy failed: {(stderr or stdout).strip()}"

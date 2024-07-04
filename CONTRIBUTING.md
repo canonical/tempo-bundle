@@ -16,37 +16,61 @@ contributing enhancements to the Tempo bundle.
 
 ## Development
 
-There are two charms used for development:
-- tempo
-- s3proxy
+This bundle is comprised of three charms:
+
+- [tempo-coordinator-k8s](https://github.com/canonical/tempo-coordinator-k8s-operator/)
+- [tempo-worker-k8s](https://github.com/canonical/tempo-worker-k8s-operator/)
+- [s3-integrator](https://github.com/canonical/s3-integrator)
 
 ### Deploy with local charms
 
-To deploy the bundle using only/some local charms you need to render the
-[`bundle.yaml.j2`](bundle.yaml.j2) template and then deploy the rendered bundle
-as usual.
+To deploy the bundle using only/some local charms, you need to [render](#render-bundle) the
+[`bundle.yaml.j2`](bundle.yaml.j2) template while passing the charms' local paths as arguments to the render command.
+Then, [deploy](#deploy-bundle) the rendered bundle as usual.
 
-#### Render template using the rendering script
-You can render and deploy a production bundle using:
+#### Render bundle with local charms
+
+You can render a `bundle.yaml` using:
 
 ```shell
-# generate and activate a virtual environment with dependencies
-tox -e integration --notest
-source .tox/integration/bin/activate
-
-./render_bundle.py bundle.yaml
-juju deploy ./bundle.yaml
+tox -e render-bundle -- --channel=edge \
+  --coordinator=<PATH_TO_TEMPO_COORDINATOR_CHARM> \
+  --s3=<PATH_TO_S3_INTEGRATOR_CHARM> \
+  --worker=<PATH_TO_TEMPO_WORKER_CHARM>
 ```
 
-Now `juju switch` into the newly created model (or use `--model=MODEL` in
-addition to `--keep-models` to use an existing model).
+#### Deploy bundle
 
-For more details, see the Testing section.
+Now,`juju add-model foo` and deploy the bundle with `juju deploy ./bundle.yaml --trust`
+
+#### Deploy MinIO
+
+For local dev/evaluation deployments, you can deploy MinIO to act as an S3 object storage and to provide S3 credentials to `s3-integrator`.
+
+```shell
+juju deploy minio --channel edge --trust  
+juju config minio access-key=YOUR_MINIO_ACCESS_KEY  
+juju config minio secret-key=YOUR_MINIO_SECRET  
+```
+
+Then, deploy MinIO client and setup buckets.
+
+```shell
+sudo snap install minio-client --edge --devmode
+minio-client config host add local http://MINIO_IP_ADDRESS:9000 YOUR_MINIO_ACCESS_KEY YOUR_MINIO_SECRET
+minio-client mb local/tempo
+```
+
+Then, configure `s3-integrator`.
+
+```shell
+juju config s3-integrator endpoint=http://MINIO_IP_ADDRESS:9000
+juju config s3-integrator bucket=tempo
+juju run s3-integrator/leader sync-s3-credentials access-key=YOUR_MINIO_ACCESS_KEY secret-key=YOUR_MINIO_SECRET
+```
 
 ## Testing
-Integration tests render the
-[`bundle-testing.yaml.j2`](tests/integration/bundle-testing.yaml.j2) template
-with the charm names/paths to use for the integration tests.
+
 By default, all charms are deployed from charmhub. Alternatively, you can pass
 local paths (or alternative charm names) as
 [command line arguments](tests/integration/conftest.py) to pytest.
@@ -61,10 +85,10 @@ tox -e integration
 You can also specify the channel:
 
 ```shell
-tox -e integration -- --channel=edge
+tox -e integration -- --channel=stable
 ```
 
-To keep the model and applications running after the tests completes:
+To keep the model and applications running after the test suite has exited:
 
 ```shell
 tox -e integration -- --keep-models

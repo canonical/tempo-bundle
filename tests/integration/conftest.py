@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 SCALING_MONOLITHIC = "scaling-monolithic"
 MINIMAL_MIRCOSERVICES = "minimal-microservices"
 RECOMMENDED_MIRCOSERVICES = "recommended-microservices"
+EDGE = "edge"
+BETA = "beta"
+CANDIDATE = "candidate"
+STABLE = "stable"
 
 
 def pytest_addoption(parser):
@@ -25,6 +29,13 @@ def pytest_addoption(parser):
         help="Choose which `mode` of the tempo-bundle to run the tests on.",
         choices=(SCALING_MONOLITHIC, MINIMAL_MIRCOSERVICES, RECOMMENDED_MIRCOSERVICES),
     )
+    parser.addoption(
+        "--channel",
+        action="store",
+        default="edge",
+        help="Choose which `channel` charms included the bundle should we getting them from.",
+        choices=(EDGE, BETA, CANDIDATE, STABLE),
+    )
 
 
 @pytest.fixture()
@@ -35,13 +46,15 @@ def rendered_bundle(pytestconfig) -> Path:
 
     # get mode from passed config option
     mode = pytestconfig.getoption("mode")
+    channel = pytestconfig.getoption("channel")
+
     # build bundle.yaml
     cmd = [
         "/usr/bin/env",
         "python3",
         f"{get_this_script_dir()}/../../render_bundle.py",
         f"{get_this_script_dir()}/../../bundle.yaml",
-        "--channel=edge",
+        f"--channel={channel}",
         f"--mode={mode}",
     ]
 
@@ -67,12 +80,12 @@ def expected_layout(pytestconfig) -> dict:
     mode = pytestconfig.getoption("mode")
     if mode == RECOMMENDED_MIRCOSERVICES or mode == MINIMAL_MIRCOSERVICES:
         return {
-            "tempo-worker-querier": 1,
-            "tempo-worker-query-frontend": 1,
-            "tempo-worker-ingester": 1,
-            "tempo-worker-distributor": 1,
-            "tempo-worker-compactor": 1,
-            "tempo-worker-metrics-generator": 1,
+            "tempo-querier": 1,
+            "tempo-query-frontend": 1,
+            "tempo-ingester": 1,
+            "tempo-distributor": 1,
+            "tempo-compactor": 1,
+            "tempo-metrics-generator": 1,
             "s3-integrator": 1,
             "tempo": 1,
         }
