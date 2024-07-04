@@ -78,11 +78,22 @@ def expected_layout(pytestconfig) -> dict:
     """
     # get mode from passed config option
     mode = pytestconfig.getoption("mode")
-    if mode == RECOMMENDED_MIRCOSERVICES or mode == MINIMAL_MIRCOSERVICES:
+    if mode == MINIMAL_MIRCOSERVICES:
         return {
             "tempo-querier": 1,
             "tempo-query-frontend": 1,
             "tempo-ingester": 1,
+            "tempo-distributor": 1,
+            "tempo-compactor": 1,
+            "tempo-metrics-generator": 1,
+            "s3-integrator": 1,
+            "tempo": 1,
+        }
+    elif mode == RECOMMENDED_MIRCOSERVICES:
+        return {
+            "tempo-querier": 1,
+            "tempo-query-frontend": 1,
+            "tempo-ingester": 3,
             "tempo-distributor": 1,
             "tempo-compactor": 1,
             "tempo-metrics-generator": 1,

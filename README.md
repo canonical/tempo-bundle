@@ -98,7 +98,7 @@ The bundle will deploy:
 
 
 ### Recommended microservices deployment
-Finally, the bundle can be rendered to deploy the 'recommended' amount of nodes for its [microservices mode](https://grafana.com/docs/tempo/latest/setup/deployment/#microservices-mode). In this scenario, each worker node is scaled up to the recommended number of units. This is the recommended way to deploy a highly available Grafana Tempo for production environments.
+Finally, the bundle can be rendered to deploy the 'recommended' amount of nodes for its [microservices mode](https://grafana.com/docs/tempo/latest/setup/deployment/#microservices-mode). In this scenario, each worker node is scaled up to the recommended number of units. This is the recommended way to deploy a highly available Grafana Tempo for production environments according to Grafana Tempo's [helm chart configuration](https://github.com/grafana/helm-charts/blob/main/charts/tempo-distributed/).
 
 Pass the `--mode=recommended-microservices` argument to render the bundle for this mode:
 
@@ -115,7 +115,7 @@ The bundle will deploy:
 - a `tempo` application with 1 unit (`tempo-coordinator-k8s` charm)
 - a `tempo-querier` application with 1 unit (`tempo-worker-k8s` charm)
 - a `tempo-query-frontend` application with 1 unit (`tempo-worker-k8s` charm)
-- a `tempo-ingester` application with 1 unit (`tempo-worker-k8s` charm)
+- a `tempo-ingester` application with 3 units (`tempo-worker-k8s` charm)
 - a `tempo-distributor` application with 1 unit (`tempo-worker-k8s` charm)
 - a `tempo-compactor` application with 1 unit (`tempo-worker-k8s` charm)
 - a `tempo-metrics-generator` application with 1 unit (`tempo-worker-k8s` charm)

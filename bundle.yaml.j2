@@ -43,11 +43,11 @@ applications:
       {%- set roles = ["querier", "query-frontend", "ingester", "distributor", "compactor", "metrics-generator"] %}
       {%- for role in roles %}
   tempo-{{ role }}:
-    charm: {{ tempo-worker|default('tempo-worker-k8s', true) }}
+    charm: {{ worker|default('tempo-worker-k8s', true) }}
     {%- if worker is undefined or not worker.endswith('charm') %}
     channel: {{ channel|default('edge', true) }}
     {%- endif %}
-    scale: 1
+    scale:  {{ 3 if mode == 'recommended-microservices' and role == 'ingester' else 1 }}
     options:
       role: "{{ role }}"
     constraints: arch=amd64
