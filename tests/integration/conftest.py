@@ -51,9 +51,10 @@ def rendered_bundle(pytestconfig) -> Path:
     # build bundle.yaml
     cmd = [
         "/usr/bin/env",
-        "python3",
-        f"{get_this_script_dir()}/../../render_bundle.py",
-        f"{get_this_script_dir()}/../../bundle.yaml",
+        "tox",
+        "-e",
+        "render-bundle",
+        "--",
         f"--channel={channel}",
         f"--mode={mode}",
     ]
