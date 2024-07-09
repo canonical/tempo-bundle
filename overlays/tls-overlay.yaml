@@ -8,4 +8,4 @@ applications:
       ca-common-name: ca.demo.local
 
 relations:
- - [ca, tempo:certificates]
+ - [ca:certificates, tempo:certificates]
