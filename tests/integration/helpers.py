@@ -60,7 +60,7 @@ async def deploy_and_configure_minio(ops_test: OpsTest):
 
     await s3_integrator_app.set_config(
         {
-            "endpoint": f"http://{minio_addr}:9000",
+            "endpoint": f"minio-0.minio-endpoints.{ops_test.model.name}.svc.cluster.local:9000",
             "bucket": BUCKET_NAME,
         }
     )
@@ -109,7 +109,6 @@ async def cli_deploy_bundle(
         name,
     ] + overlay_args
 
-    print("ARGS ", run_args)
     retcode, stdout, stderr = await ops_test.run(*run_args)
     assert retcode == 0, f"Deploy failed: {(stderr or stdout).strip()}"
     logger.info("Output %s", stdout)
