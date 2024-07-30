@@ -1,0 +1,72 @@
+---
+bundle: kubernetes
+name: tempo-bundle
+description: >
+  Tempo is a distributed tracing backend by Grafana, supporting Jaeger, Zipkin, and OpenTelemetry protocols.
+
+website: https://github.com/canonical/tempo-bundle
+issues: https://github.com/canonical/tempo-bundle/issues
+
+applications:
+  tempo:
+    charm: {{ coordinator|default('tempo-coordinator-k8s', true) }}
+    {%- if coordinator is undefined or not coordinator.endswith('charm') %}
+    channel: {{ channel|default('edge', true) }}
+    {%- endif %}
+    scale: 1
+    trust: true
+    constraints: arch=amd64
+    resources:
+      nginx-image: "ubuntu/nginx:1.24-24.04_beta"
+      nginx-prometheus-exporter-image: "nginx/nginx-prometheus-exporter:1.1.0"
+  s3-integrator:
+    charm: {{ s3|default('s3-integrator', true) }}
+    scale: 1
+    {%- if s3 is undefined or not s3.endswith('charm') %}
+    channel: {{ channel|default('edge', true) }}
+    {%- endif %}
+  {%- if mode is undefined or (mode is defined and mode != 'minimal-microservices' and mode != 'recommended-microservices') %}
+  tempo-worker:
+    charm: {{ worker|default('tempo-worker-k8s', true) }}
+    {%- if worker is undefined or not worker.endswith('charm') %}
+    channel: {{ channel|default('edge', true) }}
+    {%- endif %}
+    scale: 3
+    options:
+      role: "all"
+    constraints: arch=amd64
+    trust: true
+    resources:
+      tempo-image: "docker.io/ubuntu/tempo:2-22.04"
+  {%- endif %}
+  {%- if mode is defined and (mode == 'minimal-microservices' or mode == 'recommended-microservices') %}
+      {%- set roles = ["querier", "query-frontend", "ingester", "distributor", "compactor", "metrics-generator"] %}
+      {%- for role in roles %}
+  tempo-{{ role }}:
+    charm: {{ worker|default('tempo-worker-k8s', true) }}
+    {%- if worker is undefined or not worker.endswith('charm') %}
+    channel: {{ channel|default('edge', true) }}
+    {%- endif %}
+    scale:  {{ 3 if mode == 'recommended-microservices' and role == 'ingester' else 1 }}
+    options:
+      role: "{{ role }}"
+    constraints: arch=amd64
+    trust: true
+    resources:
+      tempo-image: "docker.io/ubuntu/tempo:2-22.04"
+      {%- endfor %}
+  {%- endif %}
+
+relations:
+- - tempo:s3
+  - s3-integrator:s3-credentials
+{%- if mode is undefined or (mode is defined and mode != 'minimal-microservices' and mode != 'recommended-microservices') %}
+- - tempo:tempo-cluster
+  - tempo-worker:tempo-cluster
+{%- endif %}
+{%- if mode is defined and (mode == 'minimal-microservices' or mode == 'recommended-microservices') %}
+  {%- for role in roles %}
+- - tempo:tempo-cluster
+  - tempo-{{ role }}:tempo-cluster
+  {%- endfor %}
+{%- endif %}
