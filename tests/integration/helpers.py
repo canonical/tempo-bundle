@@ -70,10 +70,9 @@ async def deploy_and_configure_minio(ops_test: OpsTest):
     assert action_result.status == "completed"
 
 
-def get_traces(tempo_host: str, service_name, is_tls=False):
+def get_traces(tempo_host: str, is_tls=False):
     req = requests.get(
-        "https://" if is_tls else "http://" + tempo_host + ":3200/api/search",
-        params={"service.name": service_name},
+        ("https://" if is_tls else "http://") + tempo_host + ":3200/api/search",
         verify=False,
     )
     assert req.status_code == 200
@@ -81,8 +80,10 @@ def get_traces(tempo_host: str, service_name, is_tls=False):
 
 
 @retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=1, min=4, max=10))
-async def get_traces_patiently(tempo_host, service_name, is_tls):
-    return get_traces(tempo_host, service_name, is_tls)
+async def get_traces_patiently(tempo_host, is_tls):
+    traces = get_traces(tempo_host, is_tls)
+    assert len(traces) > 0
+    return traces
 
 
 def get_this_script_dir() -> Path:
