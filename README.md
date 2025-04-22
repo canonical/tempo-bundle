@@ -57,7 +57,7 @@ juju add-model tempo
 The bundle, by default, deploys Tempo in its [scaling monolithic mode](https://grafana.com/docs/tempo/latest/setup/deployment/#scaling-monolithic-mode), which runs all required roles within a single process. Scaling monolithic mode is the way to deploy Grafana Tempo with horizontal scale out by instantiating more than one `worker` process and is useful if you want to get started quickly or want to work with Grafana Tempo in a development environment.
 
 > [!NOTE]  
-> What makes this mode 'monolithic' is that the `worker` application is configured to run with `role=all`
+> What makes this mode 'monolithic' is that the `worker` application is configured to run with `role-all=true`
 
 ```shell
 # render bundle with "edge" charms
@@ -68,7 +68,7 @@ juju deploy ./bundle.yaml --trust
 The bundle will deploy:
 
 - a `tempo` application with 1 unit (`tempo-coordinator-k8s` charm)
-- a `tempo-worker` application with 3 units (`tempo-worker-k8s` charm), configured with `role=all`
+- a `tempo-worker` application with 3 units (`tempo-worker-k8s` charm), configured with `role-all=true`
 - an `s3-integrator` application with 1 unit (`s3-integrator` charm)
 
 > [!NOTE]  
