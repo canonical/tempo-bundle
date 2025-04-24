@@ -1,3 +1,7 @@
+> [!NOTE]
+> Bundles are being sunsetted. Nowadays, the recommended way to deploy Tempo is by using 
+> [the terraform module we provide](https://github.com/canonical/observability/tree/main/terraform/modules/tempo).
+
 # Tempo bundle
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
