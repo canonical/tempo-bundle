@@ -33,7 +33,7 @@ applications:
     {%- endif %}
     scale: 3
     options:
-      role: "all"
+      role-all: true
     constraints: arch=amd64
     trust: true
     resources:
@@ -49,7 +49,8 @@ applications:
     {%- endif %}
     scale:  {{ 3 if mode == 'recommended-microservices' and role == 'ingester' else 1 }}
     options:
-      role: "{{ role }}"
+      role-all: false
+      role-{{ role }}: true
     constraints: arch=amd64
     trust: true
     resources:
